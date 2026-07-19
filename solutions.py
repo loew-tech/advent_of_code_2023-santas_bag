@@ -130,6 +130,35 @@ def day_3_part2(grid) -> int:
                    enumerate(line)) for y, line in enumerate(grid))
 
 
+def day_4(data, part=1) -> int:
+    return day_4_part1(data) if part == 1 else day_4_part2(data)
+
+
+def day_4_part1(data: list[str]) -> int:
+    score = 0
+    for line in data:
+        winners, mine = line[line.index(':'):].split('|')
+        winners, mine = set(winners.split()), set(mine.split())
+        num_matches = len(winners & mine)
+        score += 2 ** (num_matches - 1) if num_matches else 0
+    return score
+
+
+def day_4_part2(data: list[str]) -> int:
+    card_matches = []
+    counts = [1] * len(data)
+    for line in data:
+        winners, mine = line[line.index(':'):].split('|')
+        winners, mine = set(winners.split()), set(mine.split())
+        card_matches.append(len(winners & mine))
+
+    for index in range(len(card_matches)):
+        for j in range(1, card_matches[index] + 1):
+            counts[index + j] += counts[index]
+    return sum(counts)
+
+
+
 if __name__ == '__main__':
     testing_ = '-t' in sys.argv[1:] or '-testing' in sys.argv[1:]
     sys_args = [int(i) for i in sys.argv[1:] if i.isnumeric()]
