@@ -92,8 +92,6 @@ if __name__ == '__main__':
             print(f'{day}() = NotImplemented')
             continue
 
-        print(f'{i=} {day=} {testing_=} {parsers.get(f"parse_day_{i}")=}')
-        input('BREAK: ')
         def part_1(data):
             return funcs[day](data, part=1)
 
@@ -101,7 +99,6 @@ if __name__ == '__main__':
         def part_2(data):
             return funcs[day](data, part=2)
 
-        # @TODO: testing not working (doesn't validate)
         res1, res2 = read_and_solve_(i,
                                      part_1,
                                      part_2,
