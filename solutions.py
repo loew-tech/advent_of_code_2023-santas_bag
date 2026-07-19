@@ -4,8 +4,11 @@ import sys
 from collections import defaultdict
 from functools import reduce
 from operator import mul
+from string import digits
+from typing import Tuple
 
-from santas_bag.constants import NUMBER_WORDS, WORD_TO_DIGIT
+from santas_bag.constants import NUMBER_WORDS, WORD_TO_DIGIT, ALL_DIRECTIONS
+from santas_bag.grid import get_inbounds
 from santas_bag.parse import ints
 from santas_bag.utils import get_read_and_solve, get_read_input, get_naughty_or_nice, read_and_solve
 
@@ -72,9 +75,63 @@ def day_2_part2(games: defaultdict) -> int:
     return sum(reduce(mul, marbles.values(), 1) for marbles in games.values())
 
 
+def day_3(data, part=1) -> int:
+    return day_3_part1(data) if part == 1 else day_3_part2(data)
+
+
+def day_3_part1(grid):
+    ignore = {*digits, '.'}
+    inbounds = get_inbounds(grid)
+    sum_, num, is_part = 0, '', False
+    for y, row in enumerate(grid):
+        for x, v in enumerate(row):
+            if not v.isdigit():
+                sum_ += is_part * int(num or '0')
+                is_part = False
+                num = ''
+                continue
+            num += v
+            for yi, xi in ALL_DIRECTIONS:
+                is_part |= inbounds(y + yi, x + xi) and grid[y + yi][x + xi] not in ignore
+    return sum_
+
+
+def day_3_part2(grid) -> int:
+    inbounds = get_inbounds(grid)
+    def day_3b_helper(y, x: int) -> int:
+        def build_digit(y_inc, x_inc: int) -> tuple[set, int]:
+            indices = {(y + y_inc, x + x_inc)}
+            start_y, start_x = y + y_inc, x + x_inc
+
+            x_left, x_right, val_ = start_x - 1, start_x + 1, grid[start_y][start_x]
+            while 0 <= x_left and grid[start_y][x_left] in digits:
+                indices.add((start_y, x_left))
+                val_ = grid[start_y][x_left] + val_
+                x_left -= 1
+            while x_right < len(grid[start_y]) and grid[start_y][x_right]\
+                    in digits:
+                indices.add((start_y, x_right))
+                val_ += grid[start_y][x_right]
+                x_right += 1
+
+            return indices, int(val_) if val_ else 0
+
+        used_indices, val1, val2 = set(), 0, 0
+        for yi, xi in ALL_DIRECTIONS:
+            if inbounds(y + yi, x + xi) and grid[y + yi][
+                x + xi] in digits \
+                    and (y + yi, x + xi) not in used_indices:
+                indices_, val = build_digit(yi, xi)
+                val1, val2 = (val, val2) if not val1 else (val1, val)
+                used_indices.update(indices_)
+        return val1 * val2
+
+    return sum(sum((c == '*') * day_3b_helper(y, x) for x, c in
+                   enumerate(line)) for y, line in enumerate(grid))
+
+
 if __name__ == '__main__':
     testing_ = '-t' in sys.argv[1:] or '-testing' in sys.argv[1:]
-    print(f'{testing_=}')
     sys_args = [int(i) for i in sys.argv[1:] if i.isnumeric()]
     args_ = sys_args if sys_args else range(1, 26)
 
